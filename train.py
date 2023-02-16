@@ -13,12 +13,10 @@ from sklearn.model_selection import GridSearchCV
 import config
 
 
-
-
 def xgb_optimize(model, X, y, params=None):
     if params is None:
         params = {
-            'n_estimators': np.arange(50, 300, 50),
+            'n_estimators': np.arange(50, 200, 50),
             'max_depth': np.arange(3, 9, 2),
             'learning_rate': np.arange(0.05, 0.2, 0.05),
         }
