@@ -3,9 +3,10 @@ import pandas as pd
 import numpy as np
 import joblib
 
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, OrdinalEncoder
 from sklearn.compose import ColumnTransformer
 from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import GridSearchCV
@@ -29,22 +30,24 @@ if __name__ == "__main__":
     train_df = pd.read_csv(os.path.join(config.DATA_PATH, "train.csv"))
     test_df = pd.read_csv(os.path.join(config.DATA_PATH, "test.csv"))
 
-    columns = ["age", "decline_app_cnt", "score_bki", 
-               "bki_request_cnt", "region_rating", 
-               "income", "sna"]
+    num_columns = ["age", "decline_app_cnt", "score_bki", 
+                   "bki_request_cnt", "region_rating", 
+                   "income", "sna"]
+    bin_columns = ["sex", "car", "car_type", "foreign_passport"]
 
     X_train, y_train = train_df.drop("default", axis=1), train_df["default"]
     X_test, y_test = test_df.drop("default", axis=1), test_df["default"]
 
     column_transformer = ColumnTransformer([
-        ('num', StandardScaler(), columns),
+        ('bin', OrdinalEncoder(), bin_columns),
+        ('num', StandardScaler(), num_columns),
         ('cat', OneHotEncoder(), ["education"])
     ])
 
     X_train_tr = column_transformer.fit_transform(X_train)
 
-    model = XGBClassifier()
-
+    # model = XGBClassifier()
+    model = LogisticRegression()
     model.fit(X_train_tr, y_train)
 
     print(model.__class__.__name__)
@@ -61,10 +64,10 @@ if __name__ == "__main__":
     print("Test:")
     print(f"ROC AUC: {roc_auc_score(y_test, y_pred_proba)}")
 
-    model = xgb_optimize(model, X_train_tr, y_train)
-    y_pred_proba = model.predict_proba(X_test_tr)[:, 1]
-    y_pred = model.predict(X_test_tr)
-    print("After optimization ROC AUC: ", roc_auc_score(y_test, y_pred_proba))    
+    # model = xgb_optimize(model, X_train_tr, y_train)
+    # y_pred_proba = model.predict_proba(X_test_tr)[:, 1]
+    # y_pred = model.predict(X_test_tr)
+    # print("After optimization ROC AUC: ", roc_auc_score(y_test, y_pred_proba))    
 
     predict_pipeline = Pipeline([
         ("transformer", column_transformer), 
